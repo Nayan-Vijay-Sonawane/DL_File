@@ -1,62 +1,111 @@
 # DL_File
-
+import libraries
+import tensorflow as tf
+from tensorflow import keras
+import pandas as pd
 import numpy as np
-import keras.backend as K
-from keras.models import Sequential
-from keras.layers import Dense, Embedding, Lambda
-from keras.utils import np_utils
-from keras.preprocessing import sequence
-from keras.preprocessing.text import Tokenizer
-import gensim
+import matplotlib.pyplot as plt
+import random
+%matplotlib inline
 
-data=open('/content/gdrive/My Drive/covid.txt','r')
-corona_data = [text for text in data if text.count(' ') >= 2]
-vectorize = Tokenizer()
-vectorize.fit_on_texts(corona_data)
-corona_data = vectorize.texts_to_sequences(corona_data)
-total_vocab = sum(len(s) for s in corona_data)
-word_count = len(vectorize.word_index) + 1
-window_size = 2
+import datasets
+mnist = tf.keras.datasets.mnist
 
-def cbow_model(data, window_size, total_vocab):
-    total_length = window_size*2
-    for text in data:
-        text_len = len(text)
-        for idx, word in enumerate(text):
-            context_word = []
-            target   = []            
-            begin = idx - window_size
-            end = idx + window_size + 1
-            context_word.append([text[i] for i in range(begin, end) if 0 <= i < text_len and i != idx])
-            target.append(word)
-            contextual = sequence.pad_sequences(context_word, total_length=total_length)
-            final_target = np_utils.to_categorical(target, total_vocab)
-            yield(contextual, final_target) 
+split dataset into train and test data
+(x_train,y_train), (x_test,y_test) = mnist.load_data()
 
-model = Sequential()
-model.add(Embedding(input_dim=total_vocab, output_dim=100, input_length=window_size*2))
-model.add(Lambda(lambda x: K.mean(x, axis=1), output_shape=(100,)))
-model.add(Dense(total_vocab, activation='softmax'))
-model.compile(loss='categorical_crossentropy', optimizer='adam')
-for i in range(10):
-    cost = 0
-    for x, y in cbow_model(data, window_size, total_vocab):
-        cost += model.train_on_batch(contextual, final_target)
-    print(i, cost)
-    
-dimensions=100
-vect_file = open('/content/gdrive/My Drive/vectors.txt' ,'w')
-vect_file.write('{} {}\n'.format(total_vocab,dimensions))
+to see length of training and testing dataset
+len(x_train)
+len(x_test)
 
+shape of training dataset
+x_train.shape
+x_train[0]
 
-weights = model.get_weights()[0]
-for text, i in vectorize.word_index.items():
-    final_vec = ' '.join(map(str, list(weights[i, :])))
-    vect_file.write('{} {}\n'.format(text, final_vec))
-vect_file.close()
+to see how first image looks
+plt.matshow(x_train[0])
 
-cbow_output = gensim.models.KeyedVectors.load_word2vec_format('/content/gdrive/My Drive/vectors.txt', binary=False)
-cbow_output.most_similar(positive=['virus'])
+normalize the image by scaling pixel intensities to the range 0,1
+x_train=x_train/255
+x_test=x_test/255
 
-#output: 0 0 1 0 2 0 3 0 4 0 5 0 6 0 7 0 8 0 9 0
-8
+x_train[11]
+
+define the network architecture using keras(using ReLU and softmax)
+model = keras.Sequential([
+keras.layers.Flatten(input_shape=(28,28)),
+keras.layers.Dense(128, activation='relu'),
+keras.layers.Dense(10, activation='softmax')
+])
+
+model.summary()
+
+compile the model
+model.compile(optimizer='sgd', loss='sparse_categorical_crossentropy',
+metrics=['accuracy'])
+
+train the model
+history=model.fit(x_train,y_train,validation_data=(x_test,y_test),epochs=10)
+
+evaluate the model
+test_loss,test_acc=model.evaluate(x_test,y_test)
+print("loss=%.3f" %test_loss)
+print("accuracy=%.3f" %test_acc)
+
+making prediction on new data
+n=random.randint(0,9999)
+plt.imshow(x_test[n])
+plt.show()
+
+use predict() on new data
+predicted_value=model.predict(x_test)
+print("num in img is=%d" %np.argmax(predicted_value[n])) \
+
+plot graph for accuracy
+history.history??
+
+history.history.keys()
+
+dict_keys(['loss','accuracy','val_loss','val_accuracy'])
+
+plt.plot(history.history['accuracy'])
+plt.plot(history.history['val_accuracy'])
+plt.title('model accuracy')
+plt.ylabel('accuracy')
+plt.xlabel('epoch')
+plt.legend(['Train','Validation'],loc='upper left')
+plt.show()
+
+plot graph for loss
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+plt.title('model loss')
+plt.ylabel('loss')
+plt.xlabel('epoch')
+plt.legend(['Train','Validation'],loc='upper left')
+plt.show()
+
+plt.plot(history.history['accuracy'])
+plt.plot(history.history['val_accuracy'])
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+plt.title('Training loss and accuracy')
+plt.ylabel('accuracy/loss')
+plt.xlabel('epoch')
+plt.legend(['accuracy','val_accuracy','loss','val loss'])
+plt.show()
+
+save the model
+keras_model_path="C:\Users\Lenovo\Downloads\Telegram Desktop\projects\VOIS" \
+
+model.save(keras_model_path)
+
+use the save model
+restored_keras_model = tf.keras.models.load_model(keras_model_path)
+
+Conclusion: With above code We can see, that throughout the epochs, our model accuracy increases and our model loss decreases,that is good since our model gains confidence with its predictions.
+1. The two losses (loss and val_loss) are decreasing and the accuracy
+(accuracy and val_accuracy)are increasing.
+So this indicates the model is trained in a good way.
+2. The val_accuracy is the measure of how good the predictions of your model are.
+So In this case, it looks like the model is well trained after 10 epochs
