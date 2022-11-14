@@ -1,5 +1,5 @@
 import tensorflow as tf
-from tensorflow import keras \
+from tensorflow import keras 
 
 import pandas as pd
 import numpy as np
@@ -7,35 +7,43 @@ import matplotlib.pyplot as plt
 import random
 %matplotlib inline
 
-import dataset
+********import dataset*******
+
 fmnist = tf.keras.datasets.fashion_mnist
 
-split dataset
+*******split dataset******
+
 (x_train,y_train),(x_test,y_test) = fmnist.load_data()
 
-length of dataset
+********length of dataset*******
+
 len(x_train)
 len(x_test)
 
-shape of dataset
-x_train.shape
-x_test.shape \
+********shape of dataset*******
 
-intensity of pixels of first img
+x_train.shape
+x_test.shape 
+
+*******intensity of pixels of first img********
+
 x_train[0]
 
-to see how first img looks
+********to see how first img looks******
+
 plt.matshow(x_train[0])
 
-normalize the training dataset to speed up training
+*********normalize the training dataset to speed up training********
+
 x_train=x_train/255
-x_test=x_test/255 \
+x_test=x_test/255 
 
-x_train[0] \
+x_train[0] 
 
 plt.matshow(x_train[0])
 
-creating sequentioal model
+********creating sequentioal model*******
+
 model=keras.Sequential([
 keras.layers.Flatten(input_shape=(28,28)), #input data 28*28 2d
 keras.layers.Dense(128, activation='relu'), #hidden layer -128 neurons
@@ -44,38 +52,44 @@ keras.layers.Dense(10, activation='softmax') #output layer -10 classes softmax->
 
 model.summary()
 
-compile the model
+*********compile the model*******
+
 model.compile(optimizer='sgd',
 loss='sparse_categorical_crossentropy',
 metrics=['accuracy'])
 
-train the model
+*******train the model*******
+
 history=model.fit(x_train,y_train,epochs=10)
 
-evaluate the model
+********evaluate the model********
+
 test_loss,test_acc=model.evaluate(x_test,y_test)
 print("loss is=%.3f" %test_loss)
-print("accuracy is=%.3f" %test_acc) \
+print("accuracy is=%.3f" %test_acc) 
 
 plt.matshow(x_test[6])
 
-predict the data
-predicted_data=model.predict(x_test) \
+*****predict the data*******
 
-predicted_data.shape \
+predicted_data=model.predict(x_test) 
+
+predicted_data.shape 
 
 predicted_data[6]
 
-array of category
-np.argmax(predicted_data[6]) \
+*******array of category*******
+
+np.argmax(predicted_data[6]) 
 
 class_labels = ['T-shirt', 'Trouser', 'Pullover', 'Dress', 'Coat', 'Sandal','Shirt','Sneaker','Bag','Boots'] \
 
 class_labels[np.argmax(predicted_data[6])]
 
-plot graph for accuracy vs loss
+*******plot graph for accuracy vs loss*******
+
 history.history??
-history.history.keys() \
+history.history.keys() 
 
 plt.plot(history.history['accuracy'])
 plt.plot(history.history['loss'])
